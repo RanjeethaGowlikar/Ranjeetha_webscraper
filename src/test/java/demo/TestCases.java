@@ -39,7 +39,7 @@ public class TestCases {
 
     @Test
     public void testCase01() throws IOException {
-        List<HashMap<String, String>> tableData = new ArrayList<>();
+        List<HashMap<String, String>> results= new ArrayList<>();
         Wrapperclass.navigate(driver, "https://www.scrapethissite.com/pages/");
 
         WebElement hockeyTeams = wait.until(ExpectedConditions
@@ -67,7 +67,7 @@ public class TestCases {
                         details.put("Team", teamName);
                         details.put("WinPercentage", winPercentageElement);
                         details.put("Year", year);
-                        tableData.add(details);
+                        results.add(details);
                     }
                 } catch (NumberFormatException e) {
                     System.err.println("Error parsing win percentage: " + winPercentageElement);
@@ -85,17 +85,20 @@ public class TestCases {
             pageCount++;
         }
 
-        for (HashMap<String, String> team : tableData) {
-            System.out.println("EpochTime: " + team.get("EpochTime") + ", Team: " + team.get("Team") + ", Year: "
-                    + team.get("Year") + ", Win %: " + team.get("WinPercentage"));
+        for (HashMap<String, String> team : results) {
+            System.out.println(team);
+            Assert.assertTrue(Float.parseFloat(team.get("WinPercentage")) < 0.40,"Win percentage is not less than 40%");
         }
-        String filePath = "output/hockey-team-data.json";
-        Wrapperclass.saveDataAsJson(tableData, filePath);
+
+        String fileName = "hockey-team-data.json";
+        String outputDirectory ="output";
+         Wrapperclass.saveDataAsJson(results, outputDirectory, fileName);
+
 
         // Assert file presence and non-emptiness
-        File jsonFile = new File(filePath);
-        Assert.assertTrue(jsonFile.exists(), "JSON file should exist");
-        Assert.assertTrue(jsonFile.length() > 0, "JSON file should not be empty");
+         File outputFile = new File(outputDirectory,fileName);
+         Assert.assertTrue(outputFile.exists(), "JSON file should exist");
+         Assert.assertTrue(outputFile.length() > 0, "JSON file should not be empty");
     }
 
     @Test
@@ -107,8 +110,7 @@ public class TestCases {
         OscarWinningFilms.click();
 
         List<WebElement> yearElements = driver.findElements(By.xpath("//a[contains(@class,'year-link')]"));
-        // for (WebElement years : yearElements) {
-        // years.click();
+       
         for (int i = 0; i < yearElements.size(); i++) {
             yearElements = driver.findElements(By.xpath("//a[contains(@class,'year-link')]"));
             WebElement years = yearElements.get(i);
@@ -134,33 +136,38 @@ public class TestCases {
              
                 moviesData.put("isWinner", String.valueOf(isWinner));
                 results.add(moviesData);
-                // print the movie data to console
-
-                System.out.println("EpochTime: " + moviesData.get("EpochTime") + ", Year: " + moviesData.get("Year") +
-                        ", Title: " + moviesData.get("Title") + ", Nomination: " + moviesData.get("Nomination") +
-                        ", Awards: " + moviesData.get("Awards") + ", isWinner: " + moviesData.get("isWinner"));
+              
             }
-            //navigate back to the list of years
             driver.navigate().back();
             Thread.sleep(3000);
 
             yearElements = driver.findElements(By.xpath("//a[contains(@class,'year-link')]"));
             years = yearElements.get(i);
+            Thread.sleep(4000);
+            yearElements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                By.xpath("//a[contains(@class,'year-link')]")));
+                for(HashMap<String,String> result: results){
+                    //print the result
+                    System.out.println(result);
+                }
         }
-
-        String filePath = "output/oscar-winner-data.json";
-        Wrapperclass.saveDataAsJson(results, filePath);
+       String outputDirectory ="output";
+        String fileName = "oscar-winner-data.json";
+        Wrapperclass.saveDataAsJson(results, outputDirectory,fileName );
 
         // Assert file presence and non-emptiness
-        File jsonFile = new File(filePath);
-        Assert.assertTrue(jsonFile.exists(), "JSON file should exist");
-        Assert.assertTrue(jsonFile.length() > 0, "JSON file should not be empty");
+        File outputFile = new File(outputDirectory,fileName);
+        Assert.assertTrue(outputFile.exists(), "JSON file should exist");
+        Assert.assertTrue(outputFile.length() > 0, "JSON file should not be empty");
     }
 
-}
+    
 
-// Close the driver
-// if (driver != null) {
-// driver.quit();
-// System.out.println("WebDriver closed");
-// }
+
+//Close the driver
+@AfterSuite
+public void endTest(){
+System.out.println("End Test cases");
+driver.quit();
+}
+}
